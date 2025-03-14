@@ -1,12 +1,10 @@
-// src/components/UserRegister.js
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
 import "../css/UserRegister.css";
 
 const UserRegister = () => {
   const [businessType, setBusinessType] = useState("본점");
   const [businessName, setBusinessName] = useState("");
-  const [sponsorshipYn, setSponsorshipYn] = useState("N");
+  const [sponsorshipYn] = useState("N");
   const [location, setLocation] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
@@ -15,8 +13,67 @@ const UserRegister = () => {
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
   const [addressResults, setAddressResults] = useState([]);
-  const googleMapsKey = process.env.REACT_APP_GOOGLE_MAPS_KEY;
 
+  // 📌 네이버 API를 이용한 주소 검색
+  const searchAddress = async (query) => {
+    if (!query.trim()) {
+      setAddressResults([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/search-address?query=${encodeURIComponent(
+          query
+        )}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`API 오류 발생: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.addresses.length > 0) {
+        setAddressResults(
+          data.addresses.map((item) => ({
+            address_name: item.roadAddress || item.jibunAddress, // 도로명 주소 우선
+            lat: item.y,
+            lng: item.x,
+          }))
+        );
+      } else {
+        console.warn("🔍 검색 결과 없음");
+        setAddressResults([]);
+      }
+    } catch (error) {
+      console.error("❌ 주소 검색 실패:", error);
+    }
+  };
+
+  // 주소 입력 핸들러
+  const handleQueryChange = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+
+    if (value.trim() !== "") {
+      searchAddress(value);
+    } else {
+      setAddressResults([]);
+    }
+  };
+
+  // 주소 선택 시 적용
+  const handleSelectAddress = (address, locationData) => {
+    console.log("📍 선택한 주소:", address);
+    setLocation(address);
+    setLatitude(locationData.lat);
+    setLongitude(locationData.lng);
+    setQuery("");
+    setAddressResults([]);
+  };
+
+  // 유저 등록 처리
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -40,66 +97,26 @@ const UserRegister = () => {
       },
     };
 
-    console.log("📤 서버로 전송할 데이터:", data); // 🚀 전송 데이터 확인
-
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/pos/register",
-        data
-      );
+      const response = await fetch("http://localhost:8080/api/pos/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-      console.log("✅ 서버 응답:", response.data); // 🚀 서버 응답 확인
-      setMessage("유저 등록 성공!");
+      // 응답이 실패(400 Bad Request 등)일 경우
+      if (!response.ok) {
+        const errorData = await response.json(); // 서버에서 보낸 오류 메시지를 JSON으로 읽기
+        throw new Error(errorData.error || "등록 실패");
+      }
+
+      const result = await response.json(); // 성공 응답 JSON 파싱
+      setMessage(result.message); // 성공 메시지 표시
+      console.log("✅ 서버 응답:", result);
     } catch (error) {
-      console.error("❌ 유저 등록 실패:", error.response?.data || error);
-      setMessage("유저 등록 실패: " + (error.response?.data || "서버 오류"));
+      console.error("❌ 유저 등록 실패:", error);
+      setMessage("유저 등록 실패: " + error.message); // 오류 메시지를 화면에 표시
     }
-  };
-
-  const searchAddress = async (query) => {
-    try {
-      console.log("🔍 Google API 검색어:", query);
-      const response = await axios.get(
-        "https://maps.googleapis.com/maps/api/geocode/json",
-        {
-          params: {
-            address: query,
-            key: googleMapsKey,
-          },
-        }
-      );
-      console.log("📍 Google API 응답:", response.data.results);
-      setAddressResults(response.data.results);
-    } catch (error) {
-      console.error("❌ 주소 검색 실패:", error);
-    }
-  };
-
-  const handleQueryChange = (e) => {
-    const value = e.target.value;
-    setQuery(value);
-
-    if (value.trim() !== "") {
-      searchAddress(value);
-    } else {
-      setAddressResults([]);
-    }
-  };
-
-  const handleSelectAddress = (address, locationData) => {
-    console.log(
-      "📍 선택한 주소:",
-      address,
-      "위도:",
-      locationData.lat,
-      "경도:",
-      locationData.lng
-    );
-    setLocation(address);
-    setLatitude(locationData.lat);
-    setLongitude(locationData.lng);
-    setQuery("");
-    setAddressResults([]);
   };
 
   return (
@@ -127,28 +144,26 @@ const UserRegister = () => {
           />
         </div>
 
-        <input type="hidden" value={sponsorshipYn} readOnly />
-
         <div className="form-group">
           <label>위치:</label>
           <input
             type="text"
             value={query}
             onChange={handleQueryChange}
-            placeholder="주소를 입력하세요"
+            placeholder="도로명 주소를 입력하세요"
           />
           <ul className="address-results">
             {addressResults.map((item, index) => (
               <li
                 key={index}
                 onClick={() =>
-                  handleSelectAddress(
-                    item.formatted_address,
-                    item.geometry.location
-                  )
+                  handleSelectAddress(item.address_name, {
+                    lat: item.lat,
+                    lng: item.lng,
+                  })
                 }
               >
-                {item.formatted_address}
+                {item.address_name}
               </li>
             ))}
           </ul>

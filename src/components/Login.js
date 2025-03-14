@@ -3,23 +3,36 @@ import { login } from "../service/authService";
 import LoginForm from "./LoginForm";
 
 const Login = () => {
-  const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleLogin = async ({ userEmail, password }) => {
+  const handleLogin = async ({ posLoginId, posPassword }) => {
+    console.log("📤 전송할 데이터:", { posLoginId, posPassword }); // 🔍 로그 추가
+
     try {
-      const response = await login(userEmail, password);
-      localStorage.setItem("authToken", response.data.token);
-      setMessage("로그인 성공!");
+      const response = await fetch("http://localhost:8080/api/pos/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ posLoginId, posPassword }),
+      });
+
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error || "Login failed");
+      }
+
+      const { message } = await response.json();
+      alert(message);
     } catch (error) {
-      setMessage("로그인 실패: " + (error.response?.data || "서버 오류"));
+      console.error("❌ 로그인 실패:", error);
+      setErrorMessage(error.message);
     }
   };
 
   return (
     <div className="login-container">
-      <h2>로그인</h2>
+      <h2>Login</h2>
       <LoginForm onSubmit={handleLogin} />
-      <p>{message}</p>
+      {errorMessage && <p className="error-message">{errorMessage}</p>}
     </div>
   );
 };

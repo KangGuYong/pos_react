@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 
 const LoginForm = ({ onSubmit }) => {
-  const [userEmail, setUserEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [posLoginId, setPosLoginId] = useState(""); // ✅ 백엔드와 동일한 변수명 사용
+  const [posPassword, setPosPassword] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ userEmail, password });
+    onSubmit({ posLoginId, posPassword }); // ✅ 백엔드에서 받을 변수명과 일치
   };
 
   return (
@@ -15,8 +15,8 @@ const LoginForm = ({ onSubmit }) => {
         <label>이메일:</label>
         <input
           type="email"
-          value={userEmail}
-          onChange={(e) => setUserEmail(e.target.value)}
+          value={posLoginId} // ✅ 변경된 변수명 적용
+          onChange={(e) => setPosLoginId(e.target.value)}
           required
         />
       </div>
@@ -24,8 +24,8 @@ const LoginForm = ({ onSubmit }) => {
         <label>비밀번호:</label>
         <input
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          value={posPassword} // ✅ 변경된 변수명 적용
+          onChange={(e) => setPosPassword(e.target.value)}
           required
         />
       </div>
