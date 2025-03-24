@@ -1,13 +1,11 @@
 import React, { useState } from "react";
-import { login } from "../service/authService";
 import LoginForm from "./LoginForm";
-
+import { useNavigate } from "react-router-dom";
 const Login = () => {
   const [errorMessage, setErrorMessage] = useState("");
+  const navigate = useNavigate(); // 👈 추가
 
   const handleLogin = async ({ posLoginId, posPassword }) => {
-    console.log("📤 전송할 데이터:", { posLoginId, posPassword }); // 🔍 로그 추가
-
     try {
       const response = await fetch("http://localhost:8080/api/pos/login", {
         method: "POST",
@@ -15,13 +13,19 @@ const Login = () => {
         body: JSON.stringify({ posLoginId, posPassword }),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        const { error } = await response.json();
-        throw new Error(error || "Login failed");
+        throw new Error(result.error || "로그인 실패");
       }
 
-      const { message } = await response.json();
-      alert(message);
+      // ✔️ 로그인 정보 저장
+      localStorage.setItem("posId", result.posId);
+      localStorage.setItem("businessId", result.businessId);
+      localStorage.setItem("businessType", result.businessType);
+
+      alert(result.message);
+      window.location.href = `/menu/${result.posId}`; // 메뉴 페이지로 이동
     } catch (error) {
       console.error("❌ 로그인 실패:", error);
       setErrorMessage(error.message);

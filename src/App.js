@@ -4,7 +4,8 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Home from "./components/Home";
 import UserRegister from "./components/UserRegister";
 import Login from "./components/Login";
-import MenuRegister from "./components/MenuRegister";
+import MenuPage from "./components/MenuPage";
+import MenuRegisterPage from "./components/MenuRegisterPage";
 function App() {
   return (
     <Router>
@@ -12,7 +13,11 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<UserRegister />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/register-menu" element={<MenuRegister />} />
+        <Route path="/menu/:posId" element={<MenuPage />} />
+        <Route
+          path="/menu/register/:businessId"
+          element={<MenuRegisterPage />}
+        />
       </Routes>
     </Router>
   );
