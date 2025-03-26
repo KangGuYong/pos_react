@@ -5,25 +5,19 @@ import "../css/Home.css"; // 홈 화면 스타일
 
 const Home = () => {
   const navigate = useNavigate();
-
-  const goToLogin = () => {
-    navigate("/login");
-  };
-
-  const goToRegister = () => {
-    navigate("/register");
-  };
+  const navigateToLogin = () => navigate("/login");
+  const navigateToRegister = () => navigate("/register");
 
   return (
     <div className="home-container">
       <h1>POS WEB</h1>
-      <p>로그인 또는 회원가입을 선택하세요.</p>
+      <p>Select one of the following options.</p>
       <div className="button-group">
-        <button className="nav-button" onClick={goToLogin}>
-          로그인
+        <button className="nav-button" onClick={navigateToLogin}>
+          Login
         </button>
-        <button className="nav-button" onClick={goToRegister}>
-          회원가입
+        <button className="nav-button" onClick={navigateToRegister}>
+          Register
         </button>
       </div>
     </div>
