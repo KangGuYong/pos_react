@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import LoginForm from "./LoginForm";
 import { useNavigate } from "react-router-dom";
 const Login = () => {
-  const [errorMessage, setErrorMessage] = useState("");
-  const navigate = useNavigate(); // 👈 추가
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleLogin = async ({ posLoginId, posPassword }) => {
+  const login = async ({ posLoginId, posPassword }) => {
     try {
       const response = await fetch("http://localhost:8080/api/pos/login", {
         method: "POST",
@@ -16,27 +16,24 @@ const Login = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "로그인 실패");
+        throw new Error(result.error || "Failed to login");
       }
 
-      // ✔️ 로그인 정보 저장
       localStorage.setItem("posId", result.posId);
       localStorage.setItem("businessId", result.businessId);
       localStorage.setItem("businessType", result.businessType);
 
-      alert(result.message);
-      window.location.href = `/menu/${result.posId}`; // 메뉴 페이지로 이동
+      navigate(`/menu/${result.posId}`);
     } catch (error) {
-      console.error("❌ 로그인 실패:", error);
-      setErrorMessage(error.message);
+      setError(error.message);
     }
   };
 
   return (
     <div className="login-container">
       <h2>Login</h2>
-      <LoginForm onSubmit={handleLogin} />
-      {errorMessage && <p className="error-message">{errorMessage}</p>}
+      <LoginForm onSubmit={login} />
+      {error && <p className="error-message">{error}</p>}
     </div>
   );
 };
